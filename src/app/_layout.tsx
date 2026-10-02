@@ -1,18 +1,60 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import "../../global.css";
+import "../../i18next/i18next";
 
-SplashScreen.preventAutoHideAsync();
+import Toast from 'react-native-toast-message';
+import Menu from "../components/menu";
+import { AuthProvider, useAuth } from "../context/authContext";
+import { useThemeColors } from "../context/colors";
+import { ThemeProvider } from "../context/ThemeContext";
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+function ThemedStack() {
+  const c = useThemeColors();
+  const { isAuthenticated } = useAuth();
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+    <>
+      <StatusBar style={c.statusBarStyle} />
+
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: c.bg,
+          },
+        }}
+      >
+        <Stack.Protected guard={isAuthenticated}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="bookInfo" />
+          <Stack.Screen name="discover" />
+          <Stack.Screen name="editProfile" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="publicUserProfile" />
+          <Stack.Screen name="searchUser" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="userprofile" />
+        </Stack.Protected>
+
+        <Stack.Protected guard={!isAuthenticated}>
+          <Stack.Screen name="login" />
+          <Stack.Screen name="register" />
+        </Stack.Protected>
+      </Stack>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <ThemedStack />
+        <Menu />
+        <Toast />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

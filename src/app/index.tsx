@@ -1,98 +1,108 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import FilterShelf, {
+  applyShelfFilters,
+  DEFAULT_FILTERS,
+} from "@/components/filterShelf";
+import { ScreenContainer } from "@/components/ScreenContainer";
+import { useAuth } from "@/context/authContext";
+import { useThemeColors } from "@/context/colors";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, Text, View } from "react-native";
+import Toast from 'react-native-toast-message';
+import type { MockBook } from "../../mock/books";
+import CardBook from "../components/cardBookShelf";
+import { RequestEmailVerified } from "../lib/http/auth/rquesemailverified";
+import { showBookShelf } from "../lib/http/books/showbookshelf";
+import { getUserProfile } from "../lib/http/user/getuserprofile";
 
 export default function HomeScreen() {
+  const [books, setBooks] = useState<MockBook[]>(() =>
+    applyShelfFilters<MockBook>([], DEFAULT_FILTERS),
+  );
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const { t } = useTranslation();
+  const c = useThemeColors();
+  const { signOut } = useAuth();
+
+
+  // useEffect(async () => {
+  //   showBookShelf()
+  //     .then((response) => setBooks(response.data))
+  //     .then(() => RequestEmailVerified())
+  //     .catch((error: unknown) => {
+  //       if (error instanceof Error && error.message === "Session expired") {
+  //         void signOut();
+  //       }
+  //       setLoadError(t("home.loadError"));
+  //     })
+  //     .finally(() => setLoading(false));
+  // }, [t]);
+
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        console.log("Loading bookshelf...");
+        const response = await showBookShelf();
+        console.log("Bookshelf loaded:", response.data);
+        setBooks(response.data);
+        //usuário não verifciado
+        console.log("Loading user profile...");
+        const userData = await getUserProfile();
+        console.log("User profile:", userData);
+        if(userData.ok && !userData.data.email_verified) {
+          Toast.show({
+            type: 'info',
+            text1: 'Email não verificado',
+            text2: 'Por favor, verifique seu email',
+          });
+          await RequestEmailVerified();
+        }
+      } catch (error) {
+        console.error("Error loading home:", error);
+        if (error instanceof Error && error.message === "Session expired") {
+          void signOut();
+        } else if (error instanceof Error && error.message === "Email not verified") {
+          // Não fazer logout, mostrar toast e deixar estante vazia
+          Toast.show({
+            type: 'info',
+            text1: 'Email não verificado',
+            text2: 'Por favor, verifique seu email',
+          });
+          await RequestEmailVerified();
+        } else {
+          setLoadError(t("home.loadError"));
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [t]);
+  
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+    <ScreenContainer>
+      <View className="mt-[60px] mb-2 w-full px-4">
+        <Text className="mb-1 text-[32px] font-bold" style={{ color: c.text }}>
+          {t("home.title")}
+        </Text>
+        <FilterShelf
+          books={books}
+          onChange={(_filters, result) => setBooks(result)}
+        />
+      </View>
+      {loading && <ActivityIndicator color={c.accent} />}
+      {!loading && loadError !== "" && (
+        <Text className="px-4 text-center" style={{ color: c.textMuted }}>
+          {loadError}
+        </Text>
+      )}
+      {!loading && loadError === "" && books.length === 0 && (
+        <Text className="px-4 text-center" style={{ color: c.textMuted }}>
+          {t("home.empty")}
+        </Text>
+      )}
+      {!loading && books.map((book) => <CardBook key={book.id} {...book} />)}
+    </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
