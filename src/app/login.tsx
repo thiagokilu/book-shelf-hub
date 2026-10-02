@@ -61,13 +61,13 @@ export default function LoginScreen() {
       console.log("Tokens saved");
 
       // Pequeno delay para garantir que o token foi salvo
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       console.log("Calling signIn...");
       signIn();
 
       // Outro delay para garantir que o estado de autenticação foi atualizado
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       console.log("Navigating to home...");
       router.replace("/");
@@ -132,7 +132,7 @@ export default function LoginScreen() {
         )}
 
         <Pressable
-          className="mt-4 items-center rounded-lg bg-blue-600 py-3"
+          className="mt-4 items-center rounded-lg bg-[#fd6901] py-3"
           style={({ pressed }) => ({ opacity: pressed || loading ? 0.7 : 1 })}
           onPress={handleSubmit}
           disabled={loading}
@@ -152,7 +152,7 @@ export default function LoginScreen() {
           </Text>
           <Link href="/register" asChild>
             <Pressable>
-              <Text className="ml-1 text-sm font-semibold text-blue-600">
+              <Text className="ml-1 text-sm font-semibold text-[#fd6901]">
                 Cadastre-se
               </Text>
             </Pressable>

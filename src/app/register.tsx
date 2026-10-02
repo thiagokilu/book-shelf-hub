@@ -5,7 +5,13 @@ import { signUp } from "@/lib/http/auth/sign-up";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { saveTokens } from "../lib/auth/storage";
 
 export default function RegisterScreen() {
@@ -64,16 +70,19 @@ export default function RegisterScreen() {
       if (result.ok) {
         // Verifica se a API retornou tokens
         if (result.data.accessToken) {
-          await saveTokens(result.data.accessToken, result.data.refreshToken || "");
-          
+          await saveTokens(
+            result.data.accessToken,
+            result.data.refreshToken || "",
+          );
+
           // Pequeno delay para garantir que o token foi salvo
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           signIn();
 
           // Outro delay para garantir que o estado de autenticação foi atualizado
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           router.replace("/");
         } else {
           // Se não retornou tokens, redireciona para login
@@ -81,13 +90,16 @@ export default function RegisterScreen() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("register.errors.generic"));
+      setError(
+        err instanceof Error ? err.message : t("register.errors.generic"),
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  const inputClass = "mb-4 rounded-lg border border-gray-400 px-3 py-3 text-base";
+  const inputClass =
+    "mb-4 rounded-lg border border-gray-400 px-3 py-3 text-base";
 
   return (
     <ScreenContainer>
@@ -95,7 +107,10 @@ export default function RegisterScreen() {
         <Text className="mb-1 text-[32px] font-bold" style={{ color: c.text }}>
           {t("register.title")}
         </Text>
-        <Text className="mb-6 text-base" style={{ color: c.text, opacity: 0.7 }}>
+        <Text
+          className="mb-6 text-base"
+          style={{ color: c.text, opacity: 0.7 }}
+        >
           {t("register.subtitle")}
         </Text>
 
@@ -197,7 +212,7 @@ export default function RegisterScreen() {
         )}
 
         <Pressable
-          className="mt-4 items-center rounded-lg bg-blue-600 py-3"
+          className="mt-4 items-center rounded-lg bg-[#fd6901] py-3"
           style={({ pressed }) => ({ opacity: pressed || loading ? 0.7 : 1 })}
           onPress={handleSubmit}
           disabled={loading}
@@ -205,7 +220,9 @@ export default function RegisterScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text className="text-base font-semibold text-white">{t("register.submit")}</Text>
+            <Text className="text-base font-semibold text-white">
+              {t("register.submit")}
+            </Text>
           )}
         </Pressable>
       </View>
