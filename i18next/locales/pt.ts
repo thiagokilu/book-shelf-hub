@@ -14,6 +14,8 @@ export const pt = {
       page_one: "1 página",
       page_other: "{{count}} páginas",
       select: "Selecione",
+      cancel: "Cancelar",
+      save: "Salvar",
     },
     nav: {
       shelf: "Estante",
@@ -25,6 +27,12 @@ export const pt = {
       title: "Minha estante de livros",
       empty: "Nenhum livro na sua estante.",
       loadError: "Não foi possível carregar sua estante.",
+    },
+    removeBook: {
+      title: "Remover livro",
+      message: "Deseja remover este livro da sua estante?",
+      yes: "Sim",
+      no: "Não",
     },
     discover: {
       searchPlaceholder: "Buscar livros",
@@ -49,6 +57,8 @@ export const pt = {
     register: {
       title: "Cadastre-se",
       subtitle: "Crie uma conta para começar",
+      name: "Nome",
+      namePlaceholder: "Seu nome",
       username: "Nome de usuário",
       usernamePlaceholder: "seu_usuario",
       email: "Email",
@@ -61,6 +71,7 @@ export const pt = {
       hasAccount: "Já tem conta?",
       login: "faça login",
       errors: {
+        shortName: "O nome deve ter pelo menos 2 caracteres",
         shortUsername: "O nome de usuário deve ter pelo menos 3 caracteres",
         invalidEmail: "Endereço de email inválido",
         shortPassword: "A senha deve ter pelo menos 6 caracteres",
@@ -96,6 +107,28 @@ export const pt = {
     publicUserProfile: {
       lastBooks: "Últimos livros",
       editProfile: "Editar perfil",
+      noBooks: "Este usuário ainda não tem livros.",
+      booksCount_one: "1 livro",
+      booksCount_other: "{{count}} livros",
+    },
+    editBook: {
+      title: "Editar livro",
+      status: "Status",
+      currentPage: "Página atual",
+      totalPages: "de {{total}} páginas",
+    },
+    notifications: {
+      emailNotVerified: "Email não verificado",
+      verifyEmail: "Por favor, verifique seu email",
+      bookAdded: "Livro adicionado à estante",
+      bookAddedMessage: "O livro foi adicionado à sua estante.",
+      addBookError: "Erro ao adicionar livro à estante",
+      bookUpdated: "Livro atualizado",
+      bookUpdatedMessage: "O livro foi atualizado com sucesso.",
+      updateBookError: "Erro ao atualizar livro",
+      bookRemoved: "Livro removido",
+      bookRemovedMessage: "O livro foi removido da sua estante.",
+      removeBookError: "Erro ao remover livro",
     },
     editProfile: {
       title: "Editar perfil",
@@ -105,6 +138,8 @@ export const pt = {
       userName: "Nome de usuário",
       userNamePlaceholder: "seu_nome",
       userNameInvalid: "Use 3-20 caracteres (letras, números, _, .)",
+      bio: "Bio",
+      bioPlaceholder: "Conte um pouco sobre você",
       changePhoto: "Alterar foto",
       save: "Salvar",
     },

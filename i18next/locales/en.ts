@@ -14,6 +14,8 @@ export const en = {
       page_one: "1 page",
       page_other: "{{count}} pages",
       select: "Select",
+      cancel: "Cancel",
+      save: "Save",
     },
     nav: {
       shelf: "Shelf",
@@ -25,6 +27,12 @@ export const en = {
       title: "My bookshelf",
       empty: "There are no books in your bookshelf.",
       loadError: "Could not load your bookshelf.",
+    },
+    removeBook: {
+      title: "Remove book",
+      message: "Do you want to remove this book from your bookshelf?",
+      yes: "Yes",
+      no: "No",
     },
     discover: {
       searchPlaceholder: "Search books",
@@ -49,6 +57,8 @@ export const en = {
     register: {
       title: "Sign up",
       subtitle: "Create an account to get started",
+      name: "Name",
+      namePlaceholder: "Your name",
       username: "Username",
       usernamePlaceholder: "your_username",
       email: "Email",
@@ -61,6 +71,7 @@ export const en = {
       hasAccount: "Already have an account?",
       login: "Sign in",
       errors: {
+        shortName: "Name must be at least 2 characters",
         shortUsername: "Username must be at least 3 characters",
         invalidEmail: "Invalid email address",
         shortPassword: "Password must be at least 6 characters",
@@ -96,6 +107,28 @@ export const en = {
     publicUserProfile: {
       lastBooks: "Recent books",
       editProfile: "Edit profile",
+      noBooks: "This user has no books yet.",
+      booksCount_one: "1 book",
+      booksCount_other: "{{count}} books",
+    },
+    editBook: {
+      title: "Edit book",
+      status: "Status",
+      currentPage: "Current page",
+      totalPages: "of {{total}} pages",
+    },
+    notifications: {
+      emailNotVerified: "Email not verified",
+      verifyEmail: "Please verify your email",
+      bookAdded: "Book added to shelf",
+      bookAddedMessage: "The book has been successfully added to your shelf.",
+      addBookError: "Error adding book to shelf",
+      bookUpdated: "Book updated",
+      bookUpdatedMessage: "The book has been successfully updated.",
+      updateBookError: "Error updating book",
+      bookRemoved: "Book removed",
+      bookRemovedMessage: "The book has been removed from your shelf.",
+      removeBookError: "Error removing book",
     },
     editProfile: {
       title: "Edit profile",
@@ -105,6 +138,8 @@ export const en = {
       userName: "Username",
       userNamePlaceholder: "your_name",
       userNameInvalid: "Use 3-20 characters (letters, numbers, _, .)",
+      bio: "Bio",
+      bioPlaceholder: "Tell us a little about yourself",
       changePhoto: "Change photo",
       save: "Save",
     },

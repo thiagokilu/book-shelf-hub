@@ -6,6 +6,7 @@ import type { MockBook } from "../../mock/books";
 import ProgressBar from "./progressBar";
 
 export default function CardBook({
+  id,
   title,
   author,
   pages,
@@ -39,6 +40,7 @@ export default function CardBook({
           pathname: "/bookInfo",
           params: {
             book: JSON.stringify({
+              id,
               title,
               author,
               authors,

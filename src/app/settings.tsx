@@ -3,10 +3,22 @@ import ChangeTheme from "@/components/ChangeTheme";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAuth } from "@/context/authContext";
 import { useThemeColors } from "@/context/colors";
-import { currentUser } from "@/mocks/currentUser";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Image, Pressable, ScrollView, Text } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { getUserProfile } from "../lib/http/user/getuserprofile";
+
+type UserProfile = {
+  bio?: string | null;
+  name?: string | null;
+  profileImageUrl?: string | null;
+  picture?: string | null;
+  username?: string | null;
+  userName?: string | null;
+};
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -18,6 +30,32 @@ export default function SettingsScreen() {
     await signOut();
     router.replace("/login");
   };
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  const displayedName = user?.name || "";
+  const displayedUsername = user?.username || user?.userName || "";
+  const profileImage = user?.profileImageUrl || user?.picture;
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const userProfile = await getUserProfile();
+        if (userProfile.ok) {
+          setUser(userProfile.data.user);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  if (!user) {
+    return <ScreenContainer />;
+  }
+
+  const goToProfile = () => router.push("/userprofile");
 
   return (
     <ScreenContainer>
@@ -25,29 +63,40 @@ export default function SettingsScreen() {
         style={{ backgroundColor: c.bg }}
         contentContainerClassName="gap-0 p-5 pb-10 flex flex-col items-center justify-center"
       >
-        <Text className="mb-6 mt-10 text-[32px] font-bold" style={{ color: c.text }}>
+        <Text
+          className="mb-6 mt-10 text-[32px] font-bold"
+          style={{ color: c.text }}
+        >
           {t("settings.title")}
         </Text>
-
         <Pressable
-          onPress={() =>
-            router.push({
-              pathname: "/userprofile",
-              params: {
-                name: currentUser.name,
-                userName: currentUser.userName,
-                picture: currentUser.picture,
-              },
-            })
-          }
+          onPress={goToProfile}
+          className="mb-3 active:opacity-80"
+          accessibilityRole="button"
+          accessibilityLabel={t("settings.editProfile")}
         >
-          <Image
-            source={{ uri: currentUser.picture }}
-            className="mb-3 h-[100px] w-[100px] rounded-full"
-            style={{ backgroundColor: c.bgMuted }}
-          />
+          {profileImage ? (
+            <Image
+              source={{ uri: profileImage }}
+              className="h-[108px] w-[108px] rounded-full border-4 border-white"
+              style={{ backgroundColor: c.bgMuted }}
+            />
+          ) : (
+            <FontAwesome name="user-circle" size={108} color={c.text} />
+          )}
+          <View
+            className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full border-2 border-white"
+            style={{ backgroundColor: c.text }}
+          >
+            <Ionicons name="pencil" size={14} color={c.bg} />
+          </View>
         </Pressable>
-
+        <Text className="text-lg font-bold" style={{ color: c.text }}>
+          {displayedName}
+        </Text>
+        <Text className="mt-0.5 text-sm" style={{ color: c.textMuted }}>
+          @{displayedUsername}
+        </Text>
         <ChangeTheme />
         <ChangeLanguage />
 
