@@ -1,15 +1,11 @@
-export const logout = async () => {
-  const response = await fetch("https://api-books-en6a.onrender.com/sign-out", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({}),
-  });
+import { api } from "../api";
 
-  const data = await response.json();
+export const logout = async () => {
+  const response = await api.post("/sign-out", {});
+
+  const data = response.data;
   return {
-    ok: response.ok,
+    ok: response.status >= 200 && response.status < 300,
     data,
   };
 };

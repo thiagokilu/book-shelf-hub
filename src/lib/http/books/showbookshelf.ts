@@ -1,5 +1,6 @@
 import type { MockBook } from "../../../../mock/books";
 import { clearTokens, getAccessToken } from "../../auth/storage";
+import { api } from "../api";
 
 export const showBookShelf = async () => {
   const accessToken = await getAccessToken();
@@ -9,25 +10,33 @@ export const showBookShelf = async () => {
   }
 
   console.log("Bookshelf - Fetching from API...");
-  const response = await fetch(
-    `https://api-books-en6a.onrender.com/show-book-shelf`,
-    {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
+  const response = await api.get("/show-book-shelf", {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
     },
-  );
+  });
 
   console.log("Bookshelf - Response status:", response.status);
-  const data = await response.json();
+  const data = response.data;
   console.log("Bookshelf - Response data:", data);
 
-  if (!response.ok) {
+  if (response.status < 200 || response.status >= 300) {
+    console.log("Bookshelf - Error response:", data);
     if (response.status === 401) {
       // Não fazer logout se o erro for email não verificado
-      if (data.message === "E-mail não verificado" || data.error === "Unauthorized") {
+      console.log(
+        "Bookshelf - 401 error, message:",
+        data.message,
+        "error:",
+        data.error,
+      );
+      if (
+        data.message === "E-mail não verificado" ||
+        data.message === "Email not verified" ||
+        data.error === "Email not verified"
+      ) {
+        console.log("Bookshelf - Throwing Email not verified error");
         throw new Error("Email not verified");
       }
       await clearTokens();
@@ -71,7 +80,7 @@ export const showBookShelf = async () => {
   );
 
   return {
-    ok: response.ok,
+    ok: response.status >= 200 && response.status < 300,
     data: books,
   };
 };

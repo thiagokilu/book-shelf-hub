@@ -1,3 +1,5 @@
+import { api } from "../api";
+
 interface signUpRequest {
   name: string;
   username: string;
@@ -7,22 +9,17 @@ interface signUpRequest {
 }
 
 export const signUp = async (request: signUpRequest) => {
-  const response = await fetch("https://api-books-en6a.onrender.com/sign-up", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  });
+  const response = await api.post("/sign-up", request);
 
-  const data = await response.json();
+  const data = response.data;
+  const ok = response.status >= 200 && response.status < 300;
 
-  if (!response.ok) {
+  if (!ok) {
     throw new Error(data.message || "Erro ao criar conta");
   }
 
   return {
-    ok: response.ok,
+    ok,
     data,
   };
 };

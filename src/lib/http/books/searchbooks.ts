@@ -1,34 +1,42 @@
+import { api } from "../api";
+
 export const searchBooks = async (query: string) => {
-  const response = await fetch(
-    `https://api-books-en6a.onrender.com/books/search?query=${encodeURIComponent(query)}`,
-    {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-    }
-  );
+  const response = await api.get("/books/search", {
+    params: { query },
+    headers: { Accept: "application/json" },
+  });
 
-  const data = await response.json();
+  const data = response.data;
 
-  // Transform API response to match expected format
-  const books = data.books?.map((doc: any) => ({
-    id: doc.id,
-    key: doc.id,
-    title: doc.title,
-    author: doc.authors?.[0] || "Unknown Author",
-    cover: doc.coverUrl,
-    summary: doc.description || "",
-    pages: doc.pageCount || 0,
-    currentPage: 0,
-    publisher: doc.publisher || "",
-    language: doc.language || "",
-    publishDate: doc.publishedDate || "",
-    status: "WANT_TO_READ",
-  })) || [];
+  // Transform API response to match Book model format
+  const books =
+    data.books?.map((doc: any) => ({
+      id: doc.id,
+      key: doc.id,
+      title: doc.title,
+      authors: doc.authors || [],
+      author: doc.authors?.[0] || "Unknown Author",
+      cover: doc.coverUrl,
+      coverUrl: doc.coverUrl,
+      summary: doc.description || "",
+      description: doc.description || "",
+      pages: doc.pageCount || 0,
+      pageCount: doc.pageCount || 0,
+      currentPage: 0,
+      publisher: doc.publisher || "",
+      language: doc.language || "",
+      publishDate: doc.publishedDate || "",
+      publishedDate: doc.publishedDate || "",
+      publishedYear: doc.publishedYear,
+      categories: doc.categories || [],
+      isbn: doc.isbn || "",
+      infoLink: doc.infoLink || "",
+      status: "WANT_TO_READ",
+      readingPercentage: 0,
+    })) || [];
 
   return {
-    ok: response.ok,
+    ok: response.status >= 200 && response.status < 300,
     data: books,
   };
 };
