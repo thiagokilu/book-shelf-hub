@@ -6,11 +6,11 @@ import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Pressable,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { saveTokens } from "../lib/auth/storage";
 
@@ -75,14 +75,7 @@ export default function RegisterScreen() {
             result.data.refreshToken || "",
           );
 
-          // Pequeno delay para garantir que o token foi salvo
-          await new Promise((resolve) => setTimeout(resolve, 100));
-
           signIn();
-
-          // Outro delay para garantir que o estado de autenticação foi atualizado
-          await new Promise((resolve) => setTimeout(resolve, 100));
-
           router.replace("/");
         } else {
           // Se não retornou tokens, redireciona para login

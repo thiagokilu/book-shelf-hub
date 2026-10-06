@@ -91,6 +91,7 @@ export const en = {
       categories: "Categories",
       viewOnGoogleBooks: "View on Google Books",
       summary: "Summary",
+      bookNotFound: "Book not found",
       languages: {
         english: "English",
         portuguese: "Portuguese",

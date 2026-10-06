@@ -1,6 +1,7 @@
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAuth } from "@/context/authContext";
 import { useThemeColors } from "@/context/colors";
+import { useMutation } from "@tanstack/react-query";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,61 +23,45 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
-  async function handleSubmit() {
-    setError("");
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      const result = await login(email, password);
+      if (!result.ok) throw new Error("invalidCredentials");
+      if (!result.data.accessToken) throw new Error("generic");
+      return result.data;
+    },
+    onSuccess: async (data) => {
+      await saveTokens(data.accessToken ?? "", data.refreshToken ?? "");
+      signIn();
+      router.replace("/" as const);
+    },
+  });
+
+  const apiErrorKey =
+    loginMutation.error?.message === "invalidCredentials"
+      ? "login.errors.invalidCredentials"
+      : "login.errors.generic";
+  const apiError = loginMutation.isError ? t(apiErrorKey) : "";
+
+  const displayError = validationError || apiError;
+  const loading = loginMutation.isPending;
+
+  function handleSubmit() {
+    setValidationError("");
+    loginMutation.reset();
 
     if (!email.includes("@")) {
-      setError(t("login.errors.invalidEmail"));
+      setValidationError(t("login.errors.invalidEmail"));
       return;
     }
     if (password.length < 6) {
-      setError(t("login.errors.shortPassword"));
+      setValidationError(t("login.errors.shortPassword"));
       return;
     }
 
-    setLoading(true);
-    try {
-      console.log("Attempting login with:", email);
-      const result = await login(email, password);
-
-      console.log("Login result:", JSON.stringify(result));
-
-      if (!result.ok) {
-        console.log("Login failed: result.ok is false");
-        setError(t("login.errors.invalidCredentials"));
-        return;
-      }
-
-      if (!result.data.accessToken) {
-        console.log("Login failed: no access token");
-        setError(t("login.errors.generic"));
-        return;
-      }
-
-      console.log("Saving tokens...");
-      await saveTokens(result.data.accessToken, result.data.refreshToken || "");
-      console.log("Tokens saved");
-
-      // Pequeno delay para garantir que o token foi salvo
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      console.log("Calling signIn...");
-      signIn();
-
-      // Outro delay para garantir que o estado de autenticação foi atualizado
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      console.log("Navigating to home...");
-      router.replace("/");
-    } catch (error) {
-      console.error("Login error:", error);
-      setError(t("login.errors.generic"));
-    } finally {
-      setLoading(false);
-    }
+    loginMutation.mutate();
   }
 
   return (
@@ -125,9 +110,9 @@ export default function LoginScreen() {
           returnKeyType="go"
         />
 
-        {error !== "" && (
+        {displayError !== "" && (
           <Text className="mb-2 text-sm text-red-600" accessibilityRole="alert">
-            {error}
+            {displayError}
           </Text>
         )}
 
@@ -148,12 +133,12 @@ export default function LoginScreen() {
 
         <View className="mt-6 flex-row items-center justify-center">
           <Text className="text-sm" style={{ color: c.text }}>
-            Não tem uma conta?
+            {t("login.noAccount")}
           </Text>
           <Link href="/register" asChild>
             <Pressable>
               <Text className="ml-1 text-sm font-semibold text-[#fd6901]">
-                Cadastre-se
+                {t("login.register")}
               </Text>
             </Pressable>
           </Link>

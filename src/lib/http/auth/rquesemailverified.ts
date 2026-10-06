@@ -1,5 +1,10 @@
+import { z } from 'zod';
 import { getAccessToken } from "../../auth/storage";
 import { api } from "../api";
+
+const requestEmailVerifiedResponseSchema = z.object({
+  message: z.string().optional(),
+});
 
 export const RequestEmailVerified = async () => {
   const accessToken = await getAccessToken();
@@ -16,7 +21,10 @@ export const RequestEmailVerified = async () => {
       },
     },
   );
+
+  const data = requestEmailVerifiedResponseSchema.parse(response.data);
   return {
     ok: response.status >= 200 && response.status < 300,
+    data,
   };
 };

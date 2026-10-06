@@ -1,12 +1,13 @@
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useState,
+    type ReactNode,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { ScreenContainer } from "../components/ScreenContainer";
 import { clearTokens, getAccessToken } from "../lib/auth/storage";
 
 type AuthContextData = {
@@ -31,7 +32,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const token = await getAccessToken();
         setIsAuthenticated(!!token);
       } catch (error) {
-        console.error("Error checking auth:", error);
+        // Error checking auth
       } finally {
         setIsLoading(false);
       }
@@ -50,7 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   if (isLoading) {
-    return null;
+    return <ScreenContainer />;
   }
 
   return (
