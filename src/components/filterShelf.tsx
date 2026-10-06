@@ -1,17 +1,19 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 
 import { useThemeColors } from "@/context/colors";
+import type { Book } from "@/lib/models/book";
 import { SelectField } from "./FilterShelf";
 import { FORMAT_OPTIONS, SORT_OPTIONS, STATUS_OPTIONS } from "./FilterShelf/constants";
-import type { Book, ShelfFilters } from "./FilterShelf/types";
+import type { ShelfFilters } from "./FilterShelf/types";
 import { DEFAULT_FILTERS } from "./FilterShelf/types";
 import { applyShelfFilters } from "./FilterShelf/utils";
 
 // Re-export types for backward compatibility
+export type { Book, BookFormat, Status } from "@/lib/models/book";
 export { DEFAULT_FILTERS } from "./FilterShelf/types";
-export type { Book, BookFormat, ShelfFilters, SortKey, Status } from "./FilterShelf/types";
+export type { ShelfFilters, SortKey } from "./FilterShelf/types";
 export { applyShelfFilters } from "./FilterShelf/utils";
 
 type Props<T extends Book = Book> = {
@@ -92,12 +94,12 @@ export default function FilterShelf<T extends Book = Book>({ books, onChange }: 
     );
 
     const tags = useMemo(
-        () => Array.from(new Set(books.flatMap((b) => b.tags))).sort(),
+        () => Array.from(new Set(books.flatMap((b) => b.tags || []))).sort(),
         [books]
     );
 
     const tagOptions = useMemo(
-        () => [{ label: t("common.all"), value: "ALL" }, ...tags.map((t) => ({ label: t, value: t }))],
+        () => [{ label: t("common.all"), value: "ALL" }, ...tags.map((t) => ({ label: t, value: t as string }))],
         [tags, t]
     );
 

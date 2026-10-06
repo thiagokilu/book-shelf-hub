@@ -1,27 +1,4 @@
-export type Status = "WANT_TO_READ" | "READING" | "COMPLETED" | "ALL";
-export type BookFormat = "EBOOK" | "PHYSICAL" | "AUDIOBOOK";
-
-export type Book = {
-  id: string;
-  title: string;
-  status: Status;
-  progress: number; // 0 a 100
-  updatedAt: string | Date; // última leitura
-  pages: number;
-  tags: string[]; // ex.: "Técnico", "Ficção", "Produtividade"
-  format: BookFormat;
-  publisher: string;
-  publishDate: string;
-  language: string;
-  summary: string;
-  authors?: string[];
-  subtitle?: string;
-  categories?: string[];
-  isbn?: string;
-  infoLink?: string;
-  publishedYear?: number;
-  readingPercentage?: number;
-};
+import type { BookFormat, Status } from "@/lib/models/book";
 
 export type SortKey =
   "LAST_READ" | "PROGRESS_DESC" | "PROGRESS_ASC" | "PAGES_ASC" | "PAGES_DESC";

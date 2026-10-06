@@ -1,9 +1,9 @@
-import { Text, TouchableOpacity, View } from "react-native";
-import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/context/colors";
+import { useTranslation } from "react-i18next";
+import { Text, TouchableOpacity, View } from "react-native";
 
+import type { BookFormat } from "@/lib/models/book";
 import { FORMAT_OPTIONS } from "../constants";
-import type { BookFormat } from "../types";
 
 type FormatFilterProps = {
     value: BookFormat | "ALL";

@@ -1,9 +1,10 @@
 import { useMemo } from "react";
-import { View } from "react-native";
 import { useTranslation } from "react-i18next";
+import { View } from "react-native";
 
+import type { Book } from "@/lib/models/book";
 import { SelectField } from "../SelectField";
-import type { Book, ShelfFilters } from "../types";
+import type { ShelfFilters } from "../types";
 
 type TagFilterProps = {
     books: Book[];
@@ -20,12 +21,12 @@ export default function TagFilter({ books, filters, onChange }: TagFilterProps) 
     const { t } = useTranslation();
     // Tags disponíveis, extraídas dos próprios livros
     const tags = useMemo(
-        () => Array.from(new Set(books.flatMap((b) => b.tags))).sort(),
+        () => Array.from(new Set(books.flatMap((b) => b.tags || []))).sort(),
         [books]
     );
 
     const tagOptions = useMemo<SelectOption<string>[]>(
-        () => [{ label: t("common.all"), value: "ALL" }, ...tags.map((t) => ({ label: t, value: t }))],
+        () => [{ label: t("common.all"), value: "ALL" }, ...tags.map((t) => ({ label: t, value: t as string }))],
         [tags, t]
     );
 

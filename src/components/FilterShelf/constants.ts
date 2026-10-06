@@ -1,4 +1,5 @@
-import type { BookFormat, SortKey, Status } from "./types";
+import type { BookFormat, Status } from "@/lib/models/book";
+import type { SortKey } from "./types";
 
 export const STATUS_OPTIONS: { label: string; value: Status; key: string }[] = [
   { label: "", value: "ALL", key: "ALL" },

@@ -1,9 +1,9 @@
-import { Text, TouchableOpacity, View } from "react-native";
-import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/context/colors";
+import { useTranslation } from "react-i18next";
+import { Text, TouchableOpacity, View } from "react-native";
 
+import type { Status } from "@/lib/models/book";
 import { STATUS_OPTIONS } from "../constants";
-import type { Status } from "../types";
 
 type StatusFilterProps = {
     value: Status;

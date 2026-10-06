@@ -1,9 +1,10 @@
 import { View } from "react-native";
 
-import type { Book, ShelfFilters } from "../types";
-import StatusFilter from "./StatusFilter";
+import type { Book } from "@/lib/models/book";
+import type { ShelfFilters } from "../types";
 import FormatFilter from "./FormatFilter";
 import SortFilter from "./SortFilter";
+import StatusFilter from "./StatusFilter";
 import TagFilter from "./TagFilter";
 
 type FilterModalProps = {
