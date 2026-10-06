@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { Image, Pressable, Text, View } from "react-native";
 
 type Props = {
-  width: number;
+  width?: number;
   id?: string;
   title?: string;
   authors?: string[];
@@ -39,35 +39,32 @@ export function DiscoverBookCard({
     router.push({
       pathname: "/bookInfo",
       params: {
-        id,
-        title,
-        authors,
-        author,
-        summary,
-        pages,
-        currentPage,
-        publisher,
-        language,
-        publishDate,
-        status,
-        cover,
+        id: id || title,
       },
     });
   };
 
+  const containerStyle = width ? { width } : { width: "100%" as const };
+
   return (
-    <Pressable style={{ width }} onPress={handlePress}>
+    <Pressable style={containerStyle} onPress={handlePress}>
       {cover ? (
         <Image
           source={{ uri: cover }}
           resizeMode="cover"
-          className="rounded-md"
-          style={{ width, height: width * 1.5 }}
+          className="w-full rounded-md"
+          style={{
+            aspectRatio: 2 / 3,
+            backgroundColor: c.bgMuted,
+          }}
         />
       ) : (
         <View
-          className="rounded-md items-center justify-center"
-          style={{ width, height: width * 1.5, backgroundColor: c.bgMuted }}
+          className="w-full rounded-md items-center justify-center"
+          style={{
+            aspectRatio: 2 / 3,
+            backgroundColor: c.bgMuted,
+          }}
         >
           <Text style={{ color: c.textFaint, fontSize: 32 }}>?</Text>
         </View>

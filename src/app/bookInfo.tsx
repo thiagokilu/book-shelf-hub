@@ -1,8 +1,9 @@
+import { ScreenContainer } from "@/components/ScreenContainer";
 import { useThemeColors } from "@/context/colors";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking, Pressable, ScrollView, Text } from "react-native";
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
@@ -14,6 +15,7 @@ import RemoveBookModal from "@/components/RemoveBookModal";
 
 import { AddBookToShelf } from "../lib/http/books/addbookto-shelf";
 import { editBookInfo } from "../lib/http/books/editbookinfo";
+import { findBookById } from "../lib/http/books/findBookById";
 import { RemoveBookFromShelf } from "../lib/http/books/removebookfromshelf";
 import { showBookShelf } from "../lib/http/books/showbookshelf";
 import type { Book } from "../lib/models/book";
@@ -27,27 +29,7 @@ function formatDate(iso: string) {
 export default function BookInfoScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{
-    title?: string;
-    id?: string;
-    author?: string;
-    authors?: string;
-    subtitle?: string;
-    summary?: string;
-    pages?: string;
-    currentPage?: string;
-    publisher?: string;
-    language?: string;
-    publishDate?: string;
-    status?: string;
-    cover?: string;
-    categories?: string;
-    isbn?: string;
-    infoLink?: string;
-    publishedYear?: string;
-    readingPercentage?: string;
-    book?: string;
-  }>();
+  const params = useLocalSearchParams<{ id: string }>();
 
   const insets = useSafeAreaInsets();
   const c = useThemeColors();
@@ -57,177 +39,89 @@ export default function BookInfoScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [removeModalVisible, setRemoveModalVisible] = useState(false);
   const [currentBook, setCurrentBook] = useState<Book | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  let bookParams: Record<string, any> = {};
+  const bookId = params.id;
 
-  try {
-    bookParams = params.book ? JSON.parse(params.book) : {};
-  } catch {
-    bookParams = {};
-  }
-
-  const title = String(bookParams.title ?? params.title ?? "");
-
-  const authorsValue = bookParams.authors ?? params.authors ?? "";
-
-  const authors = Array.isArray(authorsValue)
-    ? authorsValue.map(String)
-    : String(authorsValue)
-        .split(",")
-        .map((bookAuthor) => bookAuthor.trim())
-        .filter(Boolean);
-
-  const author = String(bookParams.author ?? params.author ?? "").trim();
-  const normalizedAuthors =
-    authors.length > 0 ? authors : author ? [author] : [];
-
-  const subtitle = String(bookParams.subtitle ?? params.subtitle ?? "");
-
-  const summary = String(bookParams.summary ?? params.summary ?? "");
-
-  const pages = Number(bookParams.pages ?? params.pages ?? 0);
-
-  const currentPage = Number(bookParams.currentPage ?? params.currentPage ?? 0);
-
-  const publisher = String(bookParams.publisher ?? params.publisher ?? "");
-
-  const language = String(bookParams.language ?? params.language ?? "");
-
-  const publishDate = String(
-    bookParams.publishDate ?? params.publishDate ?? "",
-  );
-
-  const publishedYear = Number(
-    bookParams.publishedYear ?? params.publishedYear ?? 0,
-  );
-
-  const categoriesValue = bookParams.categories ?? params.categories ?? "";
-
-  const categories = Array.isArray(categoriesValue)
-    ? categoriesValue.map(String)
-    : String(categoriesValue)
-        .split(",")
-        .map((category) => category.trim())
-        .filter(Boolean);
-
-  const isbn = String(bookParams.isbn ?? params.isbn ?? "");
-
-  const bookId = String(bookParams.id ?? params.id ?? isbn ?? title);
-
-  const infoLink = String(bookParams.infoLink ?? params.infoLink ?? "");
-
-  const readingPercentage = Number(
-    bookParams.readingPercentage ?? params.readingPercentage ?? 0,
-  );
-
-  const rawStatus = String(bookParams.status ?? params.status ?? "");
-  const displayedStatus = currentBook?.status ?? rawStatus;
-  const displayedCurrentPage = currentBook?.currentPage ?? currentPage;
-  const displayedReadingPercentage =
-    currentBook?.readingPercentage ?? readingPercentage;
-
-  const translatedStatus = displayedStatus
-    ? t(`status.${displayedStatus}`, {
-        defaultValue: displayedStatus,
-      })
-    : "";
-
-  const progress = Math.min(
-    1,
-    Math.max(
-      0,
-      displayedReadingPercentage > 0
-        ? displayedReadingPercentage / 100
-        : pages > 0
-          ? displayedCurrentPage / pages
-          : 0,
-    ),
-  );
-
-  const cover = String(bookParams.cover ?? params.cover ?? "");
-
-  const bookToAdd: Book = {
-    id: bookId,
-    title,
-    authors: normalizedAuthors,
-    subtitle: subtitle || undefined,
-    coverUrl: cover || undefined,
-    description: summary || undefined,
-    publisher: publisher || undefined,
-    language: language || undefined,
-    publishedDate: publishDate || undefined,
-    publishedYear: publishedYear || undefined,
-    categories: categories.length > 0 ? categories : undefined,
-    isbn: isbn || undefined,
-    infoLink: infoLink || undefined,
-    pageCount: pages || undefined,
-    currentPage,
-    readingPercentage,
-    status: "WANT_TO_READ",
-  };
-
-  const languageLabel = language
-    ? t(`bookInfo.languages.${language.toLowerCase()}`, {
-        defaultValue: language,
-      })
-    : "";
-
-  // Verifica se o livro já está na bookshelf e carrega dados
   useEffect(() => {
-    const checkBookInShelf = async () => {
+    const loadBookFromShelf = async () => {
+      if (!bookId) return;
+
       try {
         const result = await showBookShelf();
 
         if (!result.ok) {
+          setLoading(false);
           return;
         }
 
         const books = result.data;
-
-        const exists = books.some(
-          (book) => String(book.id) === String(bookToAdd.id),
+        const foundBook = books.find(
+          (book) => String(book.id) === String(bookId),
         );
 
-        setIsBookInShelf(exists);
-
-        if (exists) {
-          const foundBook = books.find(
-            (book) => String(book.id) === String(bookToAdd.id),
-          );
-          if (foundBook) {
+        if (foundBook) {
+          setIsBookInShelf(true);
+          setCurrentBook({
+            id: foundBook.id,
+            title: foundBook.title,
+            authors: foundBook.authors || [foundBook.author].filter(Boolean),
+            subtitle: foundBook.subtitle,
+            coverUrl: foundBook.cover,
+            description: foundBook.summary,
+            publisher: foundBook.publisher,
+            language: foundBook.language,
+            publishedDate: foundBook.publishDate,
+            publishedYear: foundBook.publishedYear,
+            categories: foundBook.categories,
+            isbn: foundBook.isbn,
+            infoLink: foundBook.infoLink,
+            pageCount: foundBook.pages,
+            currentPage: foundBook.currentPage,
+            status: (foundBook.status === "ALL" || !foundBook.status) ? "WANT_TO_READ" : foundBook.status,
+            readingPercentage:
+              foundBook.readingPercentage || foundBook.progress,
+            updatedAt: foundBook.updatedAt,
+            tags: foundBook.tags,
+            format: foundBook.format,
+          });
+        } else {
+          // If not in shelf, try to fetch from API by ID
+          const apiResult = await findBookById(bookId);
+          if (apiResult.ok && apiResult.data) {
             setCurrentBook({
-              id: foundBook.id,
-              title: foundBook.title,
-              authors: foundBook.authors || [foundBook.author].filter(Boolean),
-              subtitle: foundBook.subtitle,
-              coverUrl: foundBook.cover,
-              description: foundBook.summary,
-              publisher: foundBook.publisher,
-              language: foundBook.language,
-              publishedDate: foundBook.publishDate,
-              publishedYear: foundBook.publishedYear,
-              categories: foundBook.categories,
-              isbn: foundBook.isbn,
-              infoLink: foundBook.infoLink,
-              pageCount: foundBook.pages,
-              currentPage: foundBook.currentPage,
-              status:
-                foundBook.status === "ALL" ? "WANT_TO_READ" : foundBook.status,
-              readingPercentage:
-                foundBook.readingPercentage || foundBook.progress,
-              updatedAt: foundBook.updatedAt,
-              tags: foundBook.tags,
-              format: foundBook.format,
+              id: apiResult.data.id,
+              title: apiResult.data.title,
+              authors: apiResult.data.authors || [],
+              subtitle: undefined,
+              coverUrl: apiResult.data.coverUrl,
+              description: apiResult.data.description,
+              publisher: apiResult.data.publisher || "",
+              language: apiResult.data.language || "",
+              publishedDate: apiResult.data.publishedDate || "",
+              publishedYear: apiResult.data.publishedYear,
+              categories: apiResult.data.categories || [],
+              isbn: apiResult.data.isbn || "",
+              infoLink: apiResult.data.infoLink || "",
+              pageCount: apiResult.data.pageCount || 0,
+              currentPage: 0,
+              status: "WANT_TO_READ",
+              readingPercentage: 0,
+              updatedAt: undefined,
+              tags: [],
+              format: "PHYSICAL",
             });
           }
         }
       } catch (error) {
-        console.error("Error checking bookshelf:", error);
+        // Error loading book
+      } finally {
+        setLoading(false);
       }
     };
 
-    checkBookInShelf();
-  }, [bookToAdd.id]);
+    loadBookFromShelf();
+  }, [bookId]);
 
   async function handleAddBookToShelf(book: Book) {
     try {
@@ -239,8 +133,8 @@ export default function BookInfoScreen() {
 
       await AddBookToShelf(book);
 
-      // Depois de adicionar, esconde o botão
       setIsBookInShelf(true);
+      setCurrentBook(book);
 
       Toast.show({
         type: "success",
@@ -295,7 +189,8 @@ export default function BookInfoScreen() {
 
   const handleRemoveBook = async () => {
     try {
-      await RemoveBookFromShelf(bookId);
+      if (!currentBook) return;
+      await RemoveBookFromShelf(currentBook.id);
       setRemoveModalVisible(false);
       setIsBookInShelf(false);
       setCurrentBook(null);
@@ -315,6 +210,70 @@ export default function BookInfoScreen() {
     }
   };
 
+  if (loading) {
+    return (
+      <ScreenContainer>
+        <View className="flex-1 items-center justify-center" style={{ backgroundColor: c.bg }}>
+          <ActivityIndicator size="large" color={c.text} />
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (!currentBook) {
+    return (
+      <ScreenContainer>
+        <View className="flex-1 items-center justify-center p-4" style={{ backgroundColor: c.bg }}>
+          <Text style={{ color: c.text }}>{t("bookInfo.bookNotFound")}</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  const title = currentBook.title;
+  const subtitle = currentBook.subtitle || "";
+  const authors = currentBook.authors;
+  const author = authors[0] || "";
+  const summary = currentBook.description || "";
+  const pages = currentBook.pageCount || 0;
+  const currentPage = currentBook.currentPage || 0;
+  const publisher = currentBook.publisher || "";
+  const language = currentBook.language || "";
+  const publishDate = currentBook.publishedDate || "";
+  const publishedYear = currentBook.publishedYear || 0;
+  const categories = currentBook.categories || [];
+  const isbn = currentBook.isbn || "";
+  const infoLink = currentBook.infoLink || "";
+  const cover = currentBook.coverUrl || "";
+  const readingPercentage = currentBook.readingPercentage || 0;
+  const displayedStatus = currentBook.status;
+  const displayedCurrentPage = currentPage;
+  const displayedReadingPercentage = readingPercentage;
+
+  const translatedStatus = displayedStatus
+    ? t(`status.${displayedStatus}`, {
+        defaultValue: displayedStatus,
+      })
+    : "";
+
+  const progress = Math.min(
+    1,
+    Math.max(
+      0,
+      displayedReadingPercentage > 0
+        ? displayedReadingPercentage / 100
+        : pages > 0
+          ? displayedCurrentPage / pages
+          : 0,
+    ),
+  );
+
+  const languageLabel = language
+    ? t(`bookInfo.languages.${language.toLowerCase()}`, {
+        defaultValue: language,
+      })
+    : "";
+
   const metaItems = [
     { label: t("bookInfo.publisher"), value: publisher },
     { label: t("bookInfo.language"), value: languageLabel },
@@ -328,6 +287,26 @@ export default function BookInfoScreen() {
       ? [{ label: t("bookInfo.categories"), value: categories.join(", ") }]
       : []),
   ];
+
+  const bookToAdd: Book = {
+    id: currentBook.id,
+    title: currentBook.title,
+    authors: currentBook.authors,
+    subtitle: currentBook.subtitle,
+    coverUrl: currentBook.coverUrl,
+    description: currentBook.description,
+    publisher: currentBook.publisher,
+    language: currentBook.language,
+    publishedDate: currentBook.publishedDate,
+    publishedYear: currentBook.publishedYear,
+    categories: currentBook.categories,
+    isbn: currentBook.isbn,
+    infoLink: currentBook.infoLink,
+    pageCount: currentBook.pageCount,
+    currentPage: currentBook.currentPage,
+    readingPercentage: currentBook.readingPercentage,
+    status: "WANT_TO_READ",
+  };
 
   return (
     <>
@@ -399,7 +378,7 @@ export default function BookInfoScreen() {
       {currentBook && (
         <EditBookModal
           visible={editModalVisible}
-          status={currentBook.status || "WANT_TO_READ"}
+          status={(currentBook.status === "ALL" || !currentBook.status) ? "WANT_TO_READ" : currentBook.status}
           currentPage={currentBook.currentPage || 0}
           totalPages={currentBook.pageCount || 0}
           onClose={() => setEditModalVisible(false)}

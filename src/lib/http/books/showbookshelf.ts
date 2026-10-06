@@ -1,15 +1,23 @@
-import type { MockBook } from "../../../../mock/books";
+import type { Book } from "@/lib/models/book";
+import { z } from 'zod';
+import { transformApiBookToBook } from "../../../lib/utils/bookTransformer";
 import { clearTokens, getAccessToken } from "../../auth/storage";
 import { api } from "../api";
 
+const bookshelfResponseSchema = z.object({
+  message: z.string().optional(),
+  error: z.string().optional(),
+  books: z.array(z.any()).optional(),
+  bookshelf: z.array(z.any()).optional(),
+  data: z.any().optional(),
+});
+
 export const showBookShelf = async () => {
   const accessToken = await getAccessToken();
-  console.log("Bookshelf - Access token:", accessToken ? "exists" : "missing");
   if (!accessToken) {
     throw new Error("Access token not found");
   }
 
-  console.log("Bookshelf - Fetching from API...");
   const response = await api.get("/show-book-shelf", {
     headers: {
       Accept: "application/json",
@@ -17,26 +25,16 @@ export const showBookShelf = async () => {
     },
   });
 
-  console.log("Bookshelf - Response status:", response.status);
-  const data = response.data;
-  console.log("Bookshelf - Response data:", data);
+  const data = bookshelfResponseSchema.parse(response.data);
 
   if (response.status < 200 || response.status >= 300) {
-    console.log("Bookshelf - Error response:", data);
     if (response.status === 401) {
       // Não fazer logout se o erro for email não verificado
-      console.log(
-        "Bookshelf - 401 error, message:",
-        data.message,
-        "error:",
-        data.error,
-      );
       if (
         data.message === "E-mail não verificado" ||
         data.message === "Email not verified" ||
         data.error === "Email not verified"
       ) {
-        console.log("Bookshelf - Throwing Email not verified error");
         throw new Error("Email not verified");
       }
       await clearTokens();
@@ -50,34 +48,7 @@ export const showBookShelf = async () => {
     ? data
     : data.books || data.bookshelf || data.data?.books || data.data || [];
 
-  // Transform API response to match expected format
-  const books: MockBook[] = (Array.isArray(rawBooks) ? rawBooks : []).map(
-    (doc: any) => ({
-      id: doc.id,
-      title: doc.title,
-      authors: doc.authors || [],
-      author: doc.authors?.[0] || "Unknown Author",
-      subtitle: doc.subtitle || "",
-      cover: doc.coverUrl,
-      summary: doc.description || "",
-      pages: doc.totalPages ?? doc.pageCount ?? 0,
-      currentPage: doc.currentPage ?? 0,
-      publisher: doc.publisher || "",
-      language: doc.language || "",
-      publishDate: doc.publishedDate || "",
-      publishedYear: doc.publishedYear,
-      categories: doc.categories || [],
-      isbn: doc.isbn || "",
-      infoLink: doc.infoLink || "",
-      status: doc.status || "WANT_TO_READ",
-      progress: doc.readingPercentage ?? doc.progress ?? 0,
-      readingPercentage: doc.readingPercentage ?? doc.progress ?? 0,
-      totalPages: doc.totalPages ?? doc.pageCount ?? 0,
-      updatedAt: doc.updatedAt || doc.updated_at || "",
-      tags: doc.tags || [],
-      format: doc.format || "PHYSICAL",
-    }),
-  );
+  const books: Book[] = (Array.isArray(rawBooks) ? rawBooks : []).map(transformApiBookToBook);
 
   return {
     ok: response.status >= 200 && response.status < 300,

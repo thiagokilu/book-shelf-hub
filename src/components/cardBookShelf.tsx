@@ -1,8 +1,8 @@
 import { useThemeColors } from "@/context/colors";
+import type { Book } from "@/lib/models/book";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Image, Pressable, Text, View } from "react-native";
-import type { MockBook } from "../../mock/books";
 import ProgressBar from "./progressBar";
 
 export default function CardBook({
@@ -24,7 +24,7 @@ export default function CardBook({
   infoLink,
   publishedYear,
   readingPercentage,
-}: MockBook) {
+}: Book) {
   const { t } = useTranslation();
   const c = useThemeColors();
   const imageSource = cover
@@ -38,28 +38,7 @@ export default function CardBook({
       onPress={() => {
         router.push({
           pathname: "/bookInfo",
-          params: {
-            book: JSON.stringify({
-              id,
-              title,
-              author,
-              authors,
-              pages,
-              status,
-              currentPage,
-              cover,
-              summary,
-              subtitle,
-              publisher,
-              publishDate,
-              language,
-              categories,
-              isbn,
-              infoLink,
-              publishedYear,
-              readingPercentage,
-            }),
-          },
+          params: { id: String(id) },
         });
       }}
     >
@@ -86,10 +65,10 @@ export default function CardBook({
           {author}
         </Text>
 
-        <ProgressBar progress={pages > 0 ? currentPage / pages : 0} />
+        <ProgressBar progress={(pages || 0) > 0 ? (currentPage || 0) / (pages || 0) : 0} />
 
         <Text className="text-xs" style={{ color: c.textFaint }}>
-          {t("common.page", { count: pages })}
+          {t("common.page", { count: pages || 0 })}
         </Text>
 
         <View

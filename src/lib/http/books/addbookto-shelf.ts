@@ -1,6 +1,12 @@
+import { z } from 'zod';
 import { getAccessToken } from "../../auth/storage";
 import { Book } from "../../models/book";
 import { api } from "../api";
+
+const addBookToShelfResponseSchema = z.object({
+  message: z.string().optional(),
+  error: z.string().optional(),
+});
 
 export const AddBookToShelf = async (book: Book) => {
   const accessToken = await getAccessToken();
@@ -15,7 +21,7 @@ export const AddBookToShelf = async (book: Book) => {
     },
   });
 
-  const data: Record<string, unknown> = response.data || {};
+  const data = addBookToShelfResponseSchema.parse(response.data || {});
 
   const ok = response.status >= 200 && response.status < 300;
 

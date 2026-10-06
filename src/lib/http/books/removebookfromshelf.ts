@@ -1,5 +1,11 @@
+import { z } from 'zod';
 import { getAccessToken } from "../../auth/storage";
 import { api } from "../api";
+
+const removeBookFromShelfResponseSchema = z.object({
+  message: z.string().optional(),
+  error: z.string().optional(),
+});
 
 export const RemoveBookFromShelf = async (id: string) => {
   const accessToken = await getAccessToken();
@@ -18,7 +24,7 @@ export const RemoveBookFromShelf = async (id: string) => {
     },
   );
 
-  const data: Record<string, unknown> = response.data || {};
+  const data = removeBookFromShelfResponseSchema.parse(response.data || {});
   const ok = response.status >= 200 && response.status < 300;
   if (!ok) {
     const message = data.message || data.error;

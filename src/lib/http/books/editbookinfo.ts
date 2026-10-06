@@ -1,11 +1,15 @@
+import { z } from 'zod';
 import { getAccessToken } from "../../auth/storage";
 import { api } from "../api";
 
-type ReadingStatus = "WANT_TO_READ" | "READING" | "COMPLETED";
+const editBookInfoResponseSchema = z.object({
+  message: z.string().optional(),
+  error: z.string().optional(),
+});
 
 export const editBookInfo = async (
   bookId: string,
-  readingStatus: ReadingStatus,
+  readingStatus: "WANT_TO_READ" | "READING" | "COMPLETED",
   currentPage: number,
 ) => {
   const accessToken = await getAccessToken();
@@ -28,7 +32,7 @@ export const editBookInfo = async (
     },
   );
 
-  const data: Record<string, unknown> = response.data || {};
+  const data = editBookInfoResponseSchema.parse(response.data || {});
   const ok = response.status >= 200 && response.status < 300;
 
   if (!ok) {
