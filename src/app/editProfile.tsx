@@ -1,8 +1,8 @@
 // app/editProfile.tsx
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useThemeColors } from "@/context/colors";
+import { useUser } from "@/context/userContext";
 import { editUserProfile } from "@/lib/http/user/editeuserprofile";
-import { getUserProfile } from "@/lib/http/user/getuserprofile";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -28,30 +28,25 @@ export default function EditProfileScreen() {
   const c = useThemeColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user, isLoading } = useUser();
 
-  const [name, setName] = useState("");
-  const [userName, setUserName] = useState("");
-  const [picture, setPicture] = useState<string | null>(null);
-  const [bio, setBio] = useState("");
+  const [name, setName] = useState(user?.name || "");
+  const [userName, setUserName] = useState(user?.username || "");
+  const [picture, setPicture] = useState<string | null>(user?.profileImageUrl || null);
+  const [bio, setBio] = useState(user?.bio || "");
+
+  if (isLoading) {
+    return <ScreenContainer />;
+  }
 
   useEffect(() => {
-    async function loadUserProfile() {
-      try {
-        const response = await getUserProfile();
-        if (!response.ok) return;
-
-        const user = response.data.user;
-        setName(user.name || "");
-        setUserName(user.userName || user.username || "");
-        setPicture(user.picture || user.profileImageUrl || null);
-        setBio(user.bio || "");
-      } catch (error) {
-        console.error("Error loading user profile:", error);
-      }
+    if (user) {
+      setName(user.name || "");
+      setUserName(user.username || "");
+      setPicture(user.profileImageUrl || null);
+      setBio(user.bio || "");
     }
-
-    loadUserProfile();
-  }, []);
+  }, [user]);
 
   const nameError =
     name.trim().length === 0 ? t("editProfile.nameRequired") : null;
@@ -80,7 +75,6 @@ export default function EditProfileScreen() {
       profileImageUrl: picture,
     });
 
-    console.log({ name: name.trim(), userName, bio: bio.trim(), picture });
     router.back();
   };
 

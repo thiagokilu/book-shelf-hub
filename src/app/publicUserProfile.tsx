@@ -1,6 +1,8 @@
 import { CardBookPublicUser } from "@/components/cardsPublicUserBooks";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useThemeColors } from "@/context/colors";
+import type { Book } from "@/lib/models/book";
+import { transformApiBookToBook } from "@/lib/utils/bookTransformer";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -8,21 +10,6 @@ import { useTranslation } from "react-i18next";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getUserReading } from "../lib/http/user/getuserreading";
-
-type ReadingBook = {
-  id: string;
-  title: string;
-  authors: string[];
-  author: string;
-  cover: string;
-  summary?: string;
-  pages?: number;
-  currentPage?: number;
-  publisher?: string;
-  language?: string;
-  publishDate?: string;
-  status?: string;
-};
 
 export default function PublicUserProfileScreen() {
   const { t } = useTranslation();
@@ -36,29 +23,14 @@ export default function PublicUserProfileScreen() {
   }>();
   const [profileName, setProfileName] = useState(name || userName);
   const [bio, setBio] = useState<string | null>(null);
-  const [books, setBooks] = useState<ReadingBook[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
 
   useEffect(() => {
     getUserReading(userName)
       .then((profile) => {
         setProfileName(profile.user.name);
         setBio(profile.user.bio);
-        setBooks(
-          profile.books.map((book) => ({
-            id: book.id,
-            title: book.title,
-            authors: book.authors,
-            author: book.authors[0] || "",
-            cover: book.coverUrl || "",
-            summary: book.description,
-            pages: book.totalPages ?? book.pageCount,
-            currentPage: book.currentPage,
-            publisher: book.publisher,
-            language: book.language,
-            publishDate: book.publishedDate,
-            status: book.status,
-          })),
-        );
+        setBooks(profile.books.map(transformApiBookToBook));
       })
       .catch((error) => {
         console.error("Error fetching public profile:", error);

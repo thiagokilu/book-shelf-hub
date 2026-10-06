@@ -1,5 +1,38 @@
+import { z } from 'zod';
 import { getAccessToken } from "../../auth/storage";
 import { api } from "../api";
+
+const bookSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  subtitle: z.string().optional(),
+  authors: z.array(z.string()),
+  coverUrl: z.string().optional(),
+  description: z.string().optional(),
+  publisher: z.string().optional(),
+  language: z.string().optional(),
+  publishedDate: z.string().optional(),
+  publishedYear: z.number().optional(),
+  categories: z.array(z.string()).optional(),
+  isbn: z.string().optional(),
+  infoLink: z.string().optional(),
+  pageCount: z.number().optional(),
+  status: z.string(),
+  currentPage: z.number().optional(),
+  totalPages: z.number().optional(),
+  readingPercentage: z.number(),
+});
+
+const getUserReadingResponseSchema = z.object({
+  user: z.object({
+    name: z.string(),
+    username: z.string(),
+    bio: z.string().nullable(),
+  }),
+  books: z.array(bookSchema),
+  message: z.string().optional(),
+  error: z.string().optional(),
+});
 
 export const getUserReading = async (username: string) => {
   const accessToken = await getAccessToken();
@@ -17,7 +50,7 @@ export const getUserReading = async (username: string) => {
     },
   );
 
-  const data = response.data;
+  const data = getUserReadingResponseSchema.parse(response.data);
 
   if (response.status < 200 || response.status >= 300) {
     throw new Error(
@@ -25,31 +58,5 @@ export const getUserReading = async (username: string) => {
     );
   }
 
-  return data as {
-    user: {
-      name: string;
-      username: string;
-      bio: string | null;
-    };
-    books: Array<{
-      id: string;
-      title: string;
-      subtitle?: string;
-      authors: string[];
-      coverUrl?: string;
-      description?: string;
-      publisher?: string;
-      language?: string;
-      publishedDate?: string;
-      publishedYear?: number;
-      categories?: string[];
-      isbn?: string;
-      infoLink?: string;
-      pageCount?: number;
-      status: string;
-      currentPage?: number;
-      totalPages?: number;
-      readingPercentage: number;
-    }>;
-  };
+  return data;
 };

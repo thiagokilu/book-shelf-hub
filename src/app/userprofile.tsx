@@ -1,57 +1,46 @@
 import { CardBookPublicUser } from "@/components/cardsPublicUserBooks";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useThemeColors } from "@/context/colors";
+import { useUser } from "@/context/userContext";
+import type { Book } from "@/lib/models/book";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { MockBook } from "../../mock/books";
 import { showBookShelf } from "../lib/http/books/showbookshelf";
-import { getUserProfile } from "../lib/http/user/getuserprofile";
-
-type UserProfile = {
-  bio?: string | null;
-  name?: string | null;
-  profileImageUrl?: string | null;
-  picture?: string | null;
-  username?: string | null;
-  userName?: string | null;
-};
 
 export default function UserProfileScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const c = useThemeColors();
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [books, setBooks] = useState<MockBook[]>([]);
+  const { user, isLoading } = useUser();
+  const [books, setBooks] = useState<Book[]>([]);
+
+  if (isLoading) {
+    return <ScreenContainer />;
+  }
 
   const displayedName = user?.name || "";
-  const displayedUsername = user?.username || user?.userName || "";
-  const profileImage = user?.profileImageUrl || user?.picture;
+  const displayedUsername = user?.username || "";
+  const profileImage = user?.profileImageUrl;
 
   useFocusEffect(
     useCallback(() => {
-      async function fetchProfile() {
+      async function fetchBooks() {
         try {
-          const userData = await getUserProfile();
-          console.log("User profile:", userData);
-          if (userData.ok) {
-            setUser(userData.data.user);
-          }
-
           const shelfData = await showBookShelf();
           if (shelfData.ok) {
             setBooks(shelfData.data);
           }
         } catch (error) {
-          console.error("Error fetching profile:", error);
+          console.error("Error fetching books:", error);
         }
       }
 
-      fetchProfile();
+      fetchBooks();
     }, []),
   );
 
