@@ -20,22 +20,6 @@ export default function Menu() {
     const insets = useSafeAreaInsets();
     const c = useThemeColors();
 
-    // Não mostrar menu na tela de bookInfo
-    if (pathname === '/bookInfo') {
-        return null;
-    }
-
-    if (pathname === '/userprofile') {
-        return null;
-    }
-
-    if (pathname === '/publicUserProfile') {
-        return null;
-    }
-
-    if (pathname === '/editProfile') {
-        return null;
-    }
 
     return (
         <View

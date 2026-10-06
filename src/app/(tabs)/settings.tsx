@@ -3,55 +3,30 @@ import ChangeTheme from "@/components/ChangeTheme";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAuth } from "@/context/authContext";
 import { useThemeColors } from "@/context/colors";
+import { useUser } from "@/context/userContext";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
-import { getUserProfile } from "../lib/http/user/getuserprofile";
-
-type UserProfile = {
-  bio?: string | null;
-  name?: string | null;
-  profileImageUrl?: string | null;
-  picture?: string | null;
-  username?: string | null;
-  userName?: string | null;
-};
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const c = useThemeColors();
   const router = useRouter();
   const { signOut } = useAuth();
+  const { user, isLoading } = useUser();
 
   const handleLogout = async () => {
     await signOut();
     router.replace("/login");
   };
-  const [user, setUser] = useState<UserProfile | null>(null);
 
   const displayedName = user?.name || "";
-  const displayedUsername = user?.username || user?.userName || "";
-  const profileImage = user?.profileImageUrl || user?.picture;
+  const displayedUsername = user?.username || "";
+  const profileImage = user?.profileImageUrl;
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const userProfile = await getUserProfile();
-        if (userProfile.ok) {
-          setUser(userProfile.data.user);
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
-
-  if (!user) {
+  if (isLoading) {
     return <ScreenContainer />;
   }
 

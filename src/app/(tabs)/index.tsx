@@ -1,20 +1,22 @@
 import FilterShelf, {
-  applyShelfFilters,
-  DEFAULT_FILTERS,
+    applyShelfFilters,
+    DEFAULT_FILTERS,
 } from "@/components/filterShelf";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAuth } from "@/context/authContext";
 import { useThemeColors } from "@/context/colors";
+import { useUser } from "@/context/userContext";
+import type { Book } from "@/lib/models/book";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import Toast from "react-native-toast-message";
-import type { MockBook } from "../../mock/books";
-import CardBook from "../components/cardBookShelf";
-import { RequestEmailVerified } from "../lib/http/auth/rquesemailverified";
-import { showBookShelf } from "../lib/http/books/showbookshelf";
-import { getUserProfile } from "../lib/http/user/getuserprofile";
+import CardBook from "../../components/cardBookShelf";
+import Skeleton from "../../components/Skeleton";
+import { RequestEmailVerified } from "../../lib/http/auth/rquesemailverified";
+import { showBookShelf } from "../../lib/http/books/showbookshelf";
+
 
 const getEmailVerificationStatus = (data: any): boolean | undefined => {
   const user = data?.user ?? data?.data?.user ?? data?.data ?? data;
@@ -34,14 +36,15 @@ const getEmailVerificationStatus = (data: any): boolean | undefined => {
 };
 
 export default function HomeScreen() {
-  const [books, setBooks] = useState<MockBook[]>(() =>
-    applyShelfFilters<MockBook>([], DEFAULT_FILTERS),
+  const [books, setBooks] = useState<Book[]>(() =>
+    applyShelfFilters<Book>([], DEFAULT_FILTERS),
   );
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const { t } = useTranslation();
   const c = useThemeColors();
   const { signOut } = useAuth();
+  const { user } = useUser();
 
   useFocusEffect(
     useCallback(() => {
@@ -49,20 +52,15 @@ export default function HomeScreen() {
 
       void (async () => {
         try {
-          console.log("Loading bookshelf...");
           const response = await showBookShelf();
-          console.log("Bookshelf loaded:", response.data);
           if (isActive) {
             setBooks(response.data);
             setLoadError("");
           }
           //usuário não verifciado
-          console.log("Loading user profile...");
-          const userData = await getUserProfile();
-          console.log("User profile:", userData);
-          const verificationStatus = getEmailVerificationStatus(userData.data);
+          const verificationStatus = getEmailVerificationStatus(user);
 
-          if (userData.ok && verificationStatus === false) {
+          if (user && verificationStatus === false) {
             Toast.show({
               type: "info",
               text1: t("notifications.emailNotVerified"),
@@ -81,10 +79,9 @@ export default function HomeScreen() {
             // Confirma pelo perfil antes de avisar: a resposta da estante pode
             // estar desatualizada em relação à verificação mais recente.
             try {
-              const userData = await getUserProfile();
               if (
-                userData.ok &&
-                getEmailVerificationStatus(userData.data) === false
+                user &&
+                getEmailVerificationStatus(user) === false
               ) {
                 Toast.show({
                   type: "info",
@@ -94,13 +91,9 @@ export default function HomeScreen() {
                 await RequestEmailVerified();
               }
             } catch (profileError) {
-              console.error(
-                "Could not confirm email verification:",
-                profileError,
-              );
+
             }
           } else {
-            console.log("Other error:", error);
             setLoadError(t("home.loadError"));
           }
         } finally {
@@ -113,7 +106,7 @@ export default function HomeScreen() {
       return () => {
         isActive = false;
       };
-    }, [signOut, t]),
+    }, [signOut, t, user]),
   );
 
   return (
@@ -127,7 +120,18 @@ export default function HomeScreen() {
           onChange={(_filters, result) => setBooks(result)}
         />
       </View>
-      {loading && <ActivityIndicator color={c.accent} />}
+      {loading &&
+        Array.from({ length: 6 }).map((_, index) => (
+          <View key={index} style={{ flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingVertical: 8 }}>
+            <Skeleton width={80} height={120} borderRadius={8} />
+            <View style={{ flex: 1, gap: 10, paddingTop: 4 }}>
+              <Skeleton width="70%" height={16} borderRadius={4} />
+              <Skeleton width="50%" height={12} borderRadius={4} />
+              <Skeleton width="40%" height={12} borderRadius={4} />
+              <Skeleton width="90%" height={8} borderRadius={4} style={{ marginTop: 8 }} />
+            </View>
+          </View>
+        ))}
       {!loading && loadError !== "" && (
         <Text className="px-4 text-center" style={{ color: c.textMuted }}>
           {loadError}

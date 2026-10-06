@@ -5,11 +5,14 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, Pressable, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SearchUsers } from "../lib/http/user/SearchUsers";
+import { SearchUsers } from "../../lib/http/user/SearchUsers";
 
 type User = {
   id: string;
+  name?: string;
   username: string;
+  bio?: string | null;
+  profileImageUrl?: string | null;
 };
 
 export default function SearchUserScreen() {
@@ -30,16 +33,12 @@ export default function SearchUserScreen() {
 
     try {
       const response = await SearchUsers(text.trim());
-      console.log('Search response:', response);
       if (response.ok) {
-        console.log('Setting users:', response.data.users);
         setUsers(response.data.users || []);
       } else {
-        console.log('Response not ok, clearing users');
         setUsers([]);
       }
     } catch (error) {
-      console.error('Error searching users:', error);
       setUsers([]);
     }
   };
@@ -105,7 +104,7 @@ export default function SearchUserScreen() {
                 style={{ color: c.text }}
                 numberOfLines={1}
               >
-                {item.username}
+                {item.name || item.username}
               </Text>
 
               <Text
