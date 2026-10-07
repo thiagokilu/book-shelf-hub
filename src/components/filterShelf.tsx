@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 
@@ -36,9 +36,9 @@ function ChipGroup<V extends string>({
 }) {
     const c = useThemeColors();
     return (
-        <View className="gap-2.5">
-            <Text className="text-base font-semibold" style={{ color: c.text }}>{label}</Text>
-            <View className="flex-row flex-wrap gap-2">
+        <View className={label ? "gap-2.5 w-full" : "w-full"}>
+            {label && <Text className="text-base font-semibold" style={{ color: c.text }}>{label}</Text>}
+            <View className="flex-row flex-wrap gap-2 w-full">
                 {options.map((opt) => {
                     const selected = opt.value === value;
                     return (
@@ -46,7 +46,7 @@ function ChipGroup<V extends string>({
                             key={opt.value}
                             onPress={() => onSelect(opt.value)}
                             accessibilityRole="button"
-                            accessibilityLabel={`${label}: ${opt.label}`}
+                            accessibilityLabel={label ? `${label}: ${opt.label}` : opt.label}
                             accessibilityState={{ selected }}
                             className="min-h-[40px] justify-center rounded-full border px-4 active:opacity-70"
                             style={{
@@ -71,12 +71,20 @@ function ChipGroup<V extends string>({
     );
 }
 
-export default function FilterShelf<T extends Book = Book>({ books, onChange }: Props<T>) {
+export interface FilterShelfRef {
+    openSheet: () => void;
+}
+
+const FilterShelf = forwardRef<FilterShelfRef, Props<Book>>(function FilterShelf<T extends Book = Book>({ books, onChange }: Props<T>, ref: React.Ref<FilterShelfRef>) {
     const { t } = useTranslation();
     const [filters, setFilters] = useState<ShelfFilters>(DEFAULT_FILTERS);
     const [draft, setDraft] = useState<ShelfFilters>(DEFAULT_FILTERS);
     const [open, setOpen] = useState(false);
     const c = useThemeColors();
+
+    useImperativeHandle(ref, () => ({
+        openSheet,
+    }));
 
     const statusOptions = useMemo(
         () => STATUS_OPTIONS.map((opt) => ({ ...opt, label: t(`filters.statusOptions.${opt.value}`) })),
@@ -104,13 +112,12 @@ export default function FilterShelf<T extends Book = Book>({ books, onChange }: 
     );
 
     const countActive = (f: ShelfFilters) =>
-        (Object.keys(DEFAULT_FILTERS) as (keyof ShelfFilters)[]).filter(
-            (k) => f[k] !== DEFAULT_FILTERS[k]
-        ).length;
+        (Object.keys(DEFAULT_FILTERS) as (keyof ShelfFilters)[])
+            .filter((k) => f[k] !== DEFAULT_FILTERS[k])
+            .length;
 
     const resultCount = useMemo(() => applyShelfFilters(books, filters).length, [books, filters]);
     const draftCount = useMemo(() => applyShelfFilters(books, draft).length, [books, draft]);
-    const activeCount = countActive(filters);
     const draftActive = countActive(draft);
 
     function commit(next: ShelfFilters) {
@@ -134,56 +141,6 @@ export default function FilterShelf<T extends Book = Book>({ books, onChange }: 
 
     return (
         <>
-            {/* Barra compacta (sempre visível) */}
-            <View
-                className="my-2 min-h-[44px] w-full flex-row items-center justify-between rounded-xl px-3"
-                style={{ borderWidth: 1, borderColor: c.border, backgroundColor: c.bgCard }}
-            >
-                <Text className="text-sm" style={{ color: c.textMuted }}>
-                    {t("common.book", { count: resultCount })}
-                </Text>
-
-                <View className="flex-row items-center gap-1">
-                    {activeCount > 0 && (
-                        <Pressable
-                            onPress={() => commit(DEFAULT_FILTERS)}
-                            accessibilityRole="button"
-                            accessibilityLabel={t("filters.clearFilters")}
-                            hitSlop={8}
-                            className="px-2 py-1.5 active:opacity-60"
-                        >
-                            <Text className="text-sm" style={{ color: c.accent }}>
-                                {t("common.clear")}
-                            </Text>
-                        </Pressable>
-                    )}
-
-                    <Pressable
-                        onPress={openSheet}
-                        accessibilityRole="button"
-                        accessibilityLabel={t("filters.openFilters")}
-                        hitSlop={6}
-                        className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5 active:opacity-70"
-                        style={{
-                            borderWidth: 1,
-                            borderColor: activeCount > 0 ? c.accent : c.borderMuted,
-                            backgroundColor: activeCount > 0 ? `${c.accent}26` : c.bgInput,
-                        }}
-                    >
-                        <Text className="text-sm font-medium" style={{ color: c.text }}>
-                            {t("filters.title")}
-                        </Text>
-                        {activeCount > 0 && (
-                            <View className="h-[18px] min-w-[18px] items-center justify-center rounded-full px-1" style={{ backgroundColor: c.accent }}>
-                                <Text className="text-[11px] font-bold text-white">
-                                    {activeCount}
-                                </Text>
-                            </View>
-                        )}
-                    </Pressable>
-                </View>
-            </View>
-
             {/* Modal sobreposto (bottom sheet) */}
             <Modal
                 visible={open}
@@ -210,33 +167,40 @@ export default function FilterShelf<T extends Book = Book>({ books, onChange }: 
                         </View>
 
                         {/* Cabeçalho */}
-                        <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-                            <Text className="text-xl font-bold" style={{ color: c.text }}>
-                                {t("filters.title")}
-                            </Text>
-                            <View className="flex-row items-center gap-2">
-                                {draftActive > 0 && (
+                        <View className="px-5 pb-2 pt-3">
+                            <View className="flex-row items-center justify-between">
+                                <View>
+                                    <Text className="text-xl font-bold" style={{ color: c.text }}>
+                                        {t("filters.title")}
+                                    </Text>
+                                    <Text className="text-sm" style={{ color: c.textMuted }}>
+                                        {t("common.book", { count: draftCount })}
+                                    </Text>
+                                </View>
+                                <View className="flex-row items-center gap-2">
+                                    {draftActive > 0 && (
+                                        <Pressable
+                                            onPress={() => setDraft(DEFAULT_FILTERS)}
+                                            accessibilityRole="button"
+                                            hitSlop={8}
+                                            className="px-2 py-1.5 active:opacity-60"
+                                        >
+                                            <Text className="text-sm font-medium" style={{ color: c.accent }}>
+                                                {t("common.clear")}
+                                            </Text>
+                                        </Pressable>
+                                    )}
                                     <Pressable
-                                        onPress={() => setDraft(DEFAULT_FILTERS)}
+                                        onPress={() => setOpen(false)}
                                         accessibilityRole="button"
+                                        accessibilityLabel={t("common.close")}
                                         hitSlop={8}
-                                        className="px-2 py-1.5 active:opacity-60"
+                                        className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
+                                        style={{ backgroundColor: c.bgMuted }}
                                     >
-                                        <Text className="text-sm font-medium" style={{ color: c.accent }}>
-                                            {t("common.clear")}
-                                        </Text>
+                                        <Text className="text-base" style={{ color: c.textSub }}>✕</Text>
                                     </Pressable>
-                                )}
-                                <Pressable
-                                    onPress={() => setOpen(false)}
-                                    accessibilityRole="button"
-                                    accessibilityLabel={t("common.close")}
-                                    hitSlop={8}
-                                    className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
-                                    style={{ backgroundColor: c.bgMuted }}
-                                >
-                                    <Text className="text-base" style={{ color: c.textSub }}>✕</Text>
-                                </Pressable>
+                                </View>
                             </View>
                         </View>
 
@@ -280,7 +244,7 @@ export default function FilterShelf<T extends Book = Book>({ books, onChange }: 
                                 style={{ backgroundColor: c.accent }}
                             >
                                 <Text className="text-base font-semibold text-white">
-                                    {t("common.viewBook", { count: draftCount })}
+                                    {t("common.apply")}
                                 </Text>
                             </Pressable>
                         </View>
@@ -289,4 +253,6 @@ export default function FilterShelf<T extends Book = Book>({ books, onChange }: 
             </Modal>
         </>
     );
-}
+});
+
+export default FilterShelf;

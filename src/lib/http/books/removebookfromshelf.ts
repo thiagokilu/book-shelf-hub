@@ -2,12 +2,17 @@ import { z } from 'zod';
 import { getAccessToken } from "../../auth/storage";
 import { api } from "../api";
 
+const removeBookFromShelfRequestSchema = z.object({
+  id: z.string(),
+});
+
 const removeBookFromShelfResponseSchema = z.object({
   message: z.string().optional(),
   error: z.string().optional(),
 });
 
 export const RemoveBookFromShelf = async (id: string) => {
+  const validatedRequest = removeBookFromShelfRequestSchema.parse({ id });
   const accessToken = await getAccessToken();
   if (!accessToken) {
     throw new Error("Access token not found");
@@ -15,7 +20,7 @@ export const RemoveBookFromShelf = async (id: string) => {
 
   const response = await api.post(
     "/remove-book-shelf",
-    { id },
+    validatedRequest,
     {
       headers: {
         Accept: "application/json",

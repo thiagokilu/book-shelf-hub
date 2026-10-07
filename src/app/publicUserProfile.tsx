@@ -1,4 +1,5 @@
 import { CardBookPublicUser } from "@/components/cardsPublicUserBooks";
+import ProfileSkeleton from "@/components/ProfileSkeleton";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useThemeColors } from "@/context/colors";
 import type { Book } from "@/lib/models/book";
@@ -24,17 +25,29 @@ export default function PublicUserProfileScreen() {
   const [profileName, setProfileName] = useState(name || userName);
   const [bio, setBio] = useState<string | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
+  const [loadedUserName, setLoadedUserName] = useState<string | null>(null);
+  const isLoading = loadedUserName !== userName;
 
   useEffect(() => {
+    let isCurrentRequest = true;
+
     getUserReading(userName)
       .then((profile) => {
+        if (!isCurrentRequest) return;
         setProfileName(profile.user.name);
         setBio(profile.user.bio);
         setBooks(profile.books.map(transformApiBookToBook));
       })
       .catch((error) => {
         console.error("Error fetching public profile:", error);
+      })
+      .finally(() => {
+        if (isCurrentRequest) setLoadedUserName(userName);
       });
+
+    return () => {
+      isCurrentRequest = false;
+    };
   }, [userName]);
 
   return (
@@ -57,51 +70,67 @@ export default function PublicUserProfileScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="items-center px-4">
-          {picture ? (
-            <Image
-              source={{ uri: picture }}
-              className="mb-3 h-[100px] w-[100px] rounded-full"
-              style={{ backgroundColor: c.bgMuted }}
-            />
-          ) : (
-            <FontAwesome name="user-circle" size={100} color={c.textMuted} />
-          )}
-          <Text className="text-lg font-bold" style={{ color: c.text }}>
-            {profileName}
-          </Text>
-          <Text className="mt-0.5 text-sm" style={{ color: c.textMuted }}>
-            @{userName}
-          </Text>
-          {Boolean(bio) && (
-            <Text
-              className="mt-2 text-center text-sm"
-              style={{ color: c.textMuted }}
-            >
-              {bio}
-            </Text>
-          )}
-        </View>
+        {isLoading ? (
+          <ProfileSkeleton />
+        ) : (
+          <>
+            <View className="items-center px-4">
+              {picture ? (
+                <Image
+                  source={{ uri: picture }}
+                  className="mb-3 h-[100px] w-[100px] rounded-full"
+                  style={{ backgroundColor: c.bgMuted }}
+                />
+              ) : (
+                <FontAwesome
+                  name="user-circle"
+                  size={100}
+                  color={c.textMuted}
+                />
+              )}
+              <Text className="text-lg font-bold" style={{ color: c.text }}>
+                {profileName}
+              </Text>
+              <Text className="mt-0.5 text-sm" style={{ color: c.textMuted }}>
+                @{userName}
+              </Text>
+              {Boolean(bio) && (
+                <Text
+                  className="mt-2 text-center text-sm"
+                  style={{ color: c.textMuted }}
+                >
+                  {bio}
+                </Text>
+              )}
+            </View>
 
-        <View className="gap-3">
-          <Text
-            className="px-4 text-base font-semibold"
-            style={{ color: c.text }}
-          >
-            {t("publicUserProfile.lastBooks")}
-          </Text>
-          {books.length === 0 && (
-            <Text className="px-4 text-center" style={{ color: c.textMuted }}>
-              {t("publicUserProfile.noBooks")}
-            </Text>
-          )}
-          {books.length > 0 && (
-            <Text className="px-4 text-center" style={{ color: c.textMuted }}>
-              {t("publicUserProfile.booksCount", { count: books.length })}
-            </Text>
-          )}
-          <CardBookPublicUser books={books} />
-        </View>
+            <View className="gap-3">
+              <Text
+                className="px-4 text-base font-semibold"
+                style={{ color: c.text }}
+              >
+                {t("publicUserProfile.lastBooks")}
+              </Text>
+              {books.length === 0 && (
+                <Text
+                  className="px-4 text-center"
+                  style={{ color: c.textMuted }}
+                >
+                  {t("publicUserProfile.noBooks")}
+                </Text>
+              )}
+              {books.length > 0 && (
+                <Text
+                  className="px-4 text-center"
+                  style={{ color: c.textMuted }}
+                >
+                  {t("publicUserProfile.booksCount", { count: books.length })}
+                </Text>
+              )}
+              <CardBookPublicUser books={books} />
+            </View>
+          </>
+        )}
       </ScrollView>
     </ScreenContainer>
   );

@@ -1,6 +1,42 @@
 import type { Book } from "@/lib/models/book";
+import { z } from "zod";
 
-export function transformApiBookToBook(doc: any): Book {
+export const apiBookSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  subtitle: z.string().optional(),
+  authors: z.array(z.string()).optional(),
+  author: z.string().optional(),
+  coverUrl: z.string().optional(),
+  cover: z.string().optional(),
+  description: z.string().optional(),
+  summary: z.string().optional(),
+  publisher: z.string().optional(),
+  language: z.string().optional(),
+  publishedDate: z.string().optional(),
+  publishDate: z.string().optional(),
+  publishedYear: z.number().optional(),
+  categories: z.array(z.string()).optional(),
+  isbn: z.string().optional(),
+  infoLink: z.string().optional(),
+  pageCount: z.number().optional(),
+  pages: z.number().optional(),
+  totalPages: z.number().optional(),
+  currentPage: z.number().optional(),
+  status: z.enum(["WANT_TO_READ", "READING", "COMPLETED", "ALL"]).optional(),
+  readingPercentage: z.number().optional(),
+  progress: z.number().optional(),
+  updatedAt: z.string().or(z.date()).optional(),
+  updated_at: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  format: z.enum(["EBOOK", "PHYSICAL", "AUDIOBOOK"]).optional(),
+});
+
+export type ApiBook = z.infer<typeof apiBookSchema>;
+
+export function transformApiBookToBook(input: unknown): Book {
+  const doc: ApiBook = apiBookSchema.parse(input);
+
   return {
     id: doc.id,
     title: doc.title,
@@ -27,7 +63,10 @@ export function transformApiBookToBook(doc: any): Book {
     readingPercentage: doc.readingPercentage ?? doc.progress ?? 0,
     progress: doc.readingPercentage ?? doc.progress ?? 0,
     updatedAt: doc.updatedAt || doc.updated_at || new Date(),
-    updated_at: doc.updatedAt || doc.updated_at,
+    updated_at:
+      doc.updatedAt instanceof Date
+        ? doc.updatedAt.toISOString()
+        : doc.updatedAt || doc.updated_at,
     tags: doc.tags || [],
     format: doc.format || "PHYSICAL",
   };

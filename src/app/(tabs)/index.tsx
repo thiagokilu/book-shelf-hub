@@ -1,16 +1,17 @@
 import FilterShelf, {
-    applyShelfFilters,
-    DEFAULT_FILTERS,
+  applyShelfFilters,
+  DEFAULT_FILTERS,
 } from "@/components/filterShelf";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAuth } from "@/context/authContext";
 import { useThemeColors } from "@/context/colors";
 import { useUser } from "@/context/userContext";
 import type { Book } from "@/lib/models/book";
+import Feather from '@expo/vector-icons/Feather';
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import CardBook from "../../components/cardBookShelf";
 import Skeleton from "../../components/Skeleton";
@@ -45,6 +46,7 @@ export default function HomeScreen() {
   const c = useThemeColors();
   const { signOut } = useAuth();
   const { user } = useUser();
+  const filterShelfRef = useRef<any>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -112,10 +114,23 @@ export default function HomeScreen() {
   return (
     <ScreenContainer>
       <View className="mt-[60px] mb-2 w-full px-4">
-        <Text className="mb-1 text-[32px] font-bold" style={{ color: c.text }}>
-          {t("home.title")}
-        </Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="mb-1 text-[32px] font-bold" style={{ color: c.text }}>
+            {t("home.title")}
+          </Text>
+          <View className="relative">
+            <Pressable
+              onPress={() => filterShelfRef.current?.openSheet()}
+              className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
+              style={{ backgroundColor: c.bgMuted }}
+              hitSlop={8}
+            >
+              <Feather name="filter" size={24} color={c.text} />
+            </Pressable>
+          </View>
+        </View>
         <FilterShelf
+          ref={filterShelfRef}
           books={books}
           onChange={(_filters, result) => setBooks(result)}
         />

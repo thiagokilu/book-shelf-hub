@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useState } from 'react';
 
 import "../../global.css";
 import "../../i18next/i18next";
@@ -7,6 +8,7 @@ import "../../i18next/i18next";
 import { UserProvider } from "@/context/userContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
+import AnimatedSplashScreen from "../components/SplashScreen";
 import { AuthProvider, useAuth } from "../context/authContext";
 import { useThemeColors } from "../context/colors";
 import { ThemeProvider } from "../context/ThemeContext";
@@ -51,16 +53,23 @@ function ThemedStack() {
 }
 
 export default function RootLayout() {
+  const [isSplashComplete, setIsSplashComplete] = useState(false);
+
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <UserProvider>
-        <QueryClientProvider client={queryClient}>
-          <ThemedStack />
-        </QueryClientProvider>
-        </UserProvider>
-        <Toast />
-      </AuthProvider>
-    </ThemeProvider>
+    <>
+      <AnimatedSplashScreen onAnimationFinish={() => setIsSplashComplete(true)} />
+      {isSplashComplete && (
+        <ThemeProvider>
+          <AuthProvider>
+            <UserProvider>
+            <QueryClientProvider client={queryClient}>
+              <ThemedStack />
+            </QueryClientProvider>
+            </UserProvider>
+            <Toast />
+          </AuthProvider>
+        </ThemeProvider>
+      )}
+    </>
   );
 }

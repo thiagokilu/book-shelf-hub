@@ -12,6 +12,12 @@ Aplicativo mobile para organizar sua estante, acompanhar leituras e descobrir li
 
 Confira o código da API no repositório [thiagokilu/api-books](https://github.com/thiagokilu/api-books).
 
+## 📌 Estado atual
+
+O aplicativo já possui autenticação, gerenciamento de sessão, estante de livros,
+descoberta com busca e paginação, perfis públicos e edição de perfil. O checklist
+abaixo registra o que foi concluído e o que ainda precisa de trabalho.
+
 ## ✅ Checklist — Book Shelf Hub
 
 ### 🔴 Crítico
@@ -27,18 +33,18 @@ Confira o código da API no repositório [thiagokilu/api-books](https://github.c
 - [x] Unificar `Book` e `MockBook`
 - [x] Passar apenas `id` para `bookInfo`
 - [x] Remover delays artificiais do login
-- [ ] Tipar contratos da API com Zod/TypeScript
+- [x] Completar a tipagem dos contratos da API com Zod/TypeScript
 - [x] Corrigir textos hardcoded no login com i18n
 - [x] Melhorar controle de rotas do Menu
 - [x] Separar nome e `@username` no `searchUser`
 
 ### 🟢 Melhorias
 
-- [x] Adicionar skeleton/loading nos perfis
-- [x] Trocar `ScrollView` por `FlatList` no Discover
+- [x] Usar skeleton/loading durante o carregamento dos perfis
+- [x] Usar lista otimizada (`FlashList`) no Discover
 - [x] Implementar paginação no Discover
-- [ ] Implementar Splash Screen durante o carregamento inicial
-- [x] Substituir `any[]` por tipos específicos
+- [x] Implementar Splash Screen animada durante o carregamento inicial
+- [ ] Substituir os usos restantes de `any` por tipos específicos
 - [ ] Criar testes unitários
 - [ ] Adicionar testes para `applyShelfFilters`
 - [ ] Adicionar testes para `getEmailVerificationStatus`

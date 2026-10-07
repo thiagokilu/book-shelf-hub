@@ -2,6 +2,12 @@ import { z } from 'zod';
 import { getAccessToken } from "../../auth/storage";
 import { api } from "../api";
 
+const editBookInfoRequestSchema = z.object({
+  id: z.string(),
+  readingStatus: z.enum(["WANT_TO_READ", "READING", "COMPLETED"]),
+  currentPage: z.number(),
+});
+
 const editBookInfoResponseSchema = z.object({
   message: z.string().optional(),
   error: z.string().optional(),
@@ -12,6 +18,11 @@ export const editBookInfo = async (
   readingStatus: "WANT_TO_READ" | "READING" | "COMPLETED",
   currentPage: number,
 ) => {
+  const validatedRequest = editBookInfoRequestSchema.parse({
+    id: bookId,
+    readingStatus,
+    currentPage,
+  });
   const accessToken = await getAccessToken();
   if (!accessToken) {
     throw new Error("Access token not found");
@@ -19,11 +30,7 @@ export const editBookInfo = async (
 
   const response = await api.put(
     "/edit-book-reading-status",
-    {
-      id: bookId,
-      readingStatus,
-      currentPage,
-    },
+    validatedRequest,
     {
       headers: {
         Accept: "application/json",
